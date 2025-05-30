@@ -4,17 +4,32 @@
 import pygame
 from constants import *
 from player import Player
+from asteroid import Asteroid # 8)
+from asteroidfield import AsteroidField # 9)
+from shot import Shot # CORRECT
+import sys
 
 def main():
     pygame.init()
-    updatable = pygame.sprite.Group() # 7)
-    drawable = pygame.sprite.Group() # 7)
-    Player.containers = (updatable, drawable) # 7)
-    x = SCREEN_WIDTH / 2
-    y = SCREEN_HEIGHT / 2
-    player = Player(x,y) # 1) 2)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
+    
+    updatable = pygame.sprite.Group() # 7)
+    drawable = pygame.sprite.Group() # 7)
+    asteroids = pygame.sprite.Group() # 8)
+    shots = pygame.sprite.Group() # CORRECT
+    
+    Asteroid.containers = (asteroids, updatable, drawable) # 8)
+    AsteroidField.containers = updatable # 9) no need for () with one
+    asteroid_field = AsteroidField() # 9)
+    
+    Shot.containers = (shots, updatable, drawable) # CORRECT
+    
+    x = SCREEN_WIDTH / 2
+    y = SCREEN_HEIGHT / 2
+    Player.containers = (updatable, drawable) # 7)
+    player = Player(x,y) # 1) 2)
+    
     dt = 0
     
     # print(f"Starting Asteroids!")
@@ -27,6 +42,15 @@ def main():
             if event.type == pygame.QUIT:
                 return
         updatable.update(dt)
+        for asteroid in asteroids: # 10)
+            if asteroid.collides_with(player):
+                print(f"Game over")
+                sys.exit() # 10) window closes, game is over
+            for shot in shots:
+                if asteroid.collides_with(shot):
+                    # asteroid.kill() # 11)
+                    shot.kill() # 11)
+                    asteroid.split()
         # player.update(dt) # 4)
         screen.fill("black")
         for obj in drawable:
@@ -40,6 +64,7 @@ def main():
 if __name__ == "__main__":
     main()
 
+# ENDNOTES
 # 1) In your main function, instantiate a Player object. 
 # 2) You can pass these values to the constructor to spawn it in the middle of the screen:
 # x = SCREEN_WIDTH / 2
@@ -59,3 +84,14 @@ if __name__ == "__main__":
 # Draw multiple objects easily by iterating through the drawable group.
 # Organize objects based on their behavior or type (e.g., enemies, projectiles, collidable_objects).
 # This keeps your game loop much cleaner and makes it easier to manage a growing number of game elements.
+# 8) In the initialization code in main (before the game loop starts), 
+# create a new pygame.sprite.Group which will contain all of the asteroids. 
+# Like we did with the Player class, set the static containers field of the Asteroid 
+# class to the new asteroids group, as well as the updatable and drawable groups.
+# 9) In the main.py file, set the static containers field of the AsteroidField class to only the updatable 
+# group (it's not drawable, and it's not an asteroid itself). 
+# Create a new AsteroidField object in the initialization code.
+# 10) After the update step in your game loop, iterate over all of the objects in your asteroids group. 
+# Check if any of them collide with the player. 
+# If a collision is detected, the program should print Game over! and immediately exit the program.
+# 11)  kill() is a method that's built into pygame.sprite.Sprite
